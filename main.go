@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/url"
 	"time"
+	"github.com/TimothyGregg/offsite-mangoes/loc_db_talker"
 )
 
 func main () {
@@ -32,10 +33,16 @@ func main () {
 	}
 
 	fmt.Println("Successfully connected and pinged.")
+
+	c := make(chan loc_db_talker.PlaylistSong)
+	go loc_db_talker.Songs_Table_Reader(c)
+	for ps := range c {
+		fmt.Println(ps.PlaylistID + " : " + ps.SongID)
+	}
 }
 
 func getPass() (file_data string) {
-	data, err := ioutil.ReadFile("../password")
+	data, err := ioutil.ReadFile("passwords/the_db")
 
 	if err != nil {
 		log.Fatal(err)

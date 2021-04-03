@@ -15,5 +15,4 @@
 # vendor/
 
 # Local Storage
-password
-local
+passwords/

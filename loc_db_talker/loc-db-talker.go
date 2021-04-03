@@ -1,7 +1,6 @@
-package main
+package loc_db_talker
 
 import (
-	"fmt"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
@@ -13,14 +12,8 @@ type PlaylistSong struct {
 	SongID string
 }
 
-func main() {
+func Songs_Table_Reader(c chan PlaylistSong) {
 	db, err := sql.Open("mysql", "root:" + getPass() + "@(localhost:3306)/spotify?parseTime=true")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = db.Ping()
 
 	if err != nil {
 		log.Fatal(err)
@@ -31,18 +24,24 @@ func main() {
 
 	var ps PlaylistSong
 
-	rows.Next()
-	err = rows.Scan(&ps.PlaylistID, &ps.SongID)
-
-	if err != nil {
-		log.Fatal(err)
+	more := rows.Next()
+	for {
+		// break on end of query results
+		if !more {
+			close(c)
+			break
+		}
+		err = rows.Scan(&ps.PlaylistID, &ps.SongID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		more = rows.Next()
+		c <- ps
 	}
-
-	fmt.Println(ps.PlaylistID + " : " + ps.SongID)
 }
 
 func getPass() (file_data string) {
-	data, err := ioutil.ReadFile("../local")
+	data, err := ioutil.ReadFile("passwords/local")
 
 	if err != nil {
 		log.Fatal(err)
