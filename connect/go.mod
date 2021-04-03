@@ -1,4 +1,4 @@
-module github.com/TimothyGregg/connect/offsite-mangoes
+module github.com/TimothyGregg/offsite-mangoes/connect
 
 go 1.16
 

@@ -8,16 +8,17 @@ import (
 	"io/ioutil"
 )
 
-func main() {
-	db, err := sql.Open("mysql", "root:" + *(getPass()) + "@(localhost:3306)/spotify?parseTime=true")
+type PlaylistSong struct {
+	PlaylistID string
+	SongID string
+}
 
-	fmt.Println("Here")
+func main() {
+	db, err := sql.Open("mysql", "root:" + getPass() + "@(localhost:3306)/spotify?parseTime=true")
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("Here Too")
 
 	err = db.Ping()
 
@@ -28,26 +29,25 @@ func main() {
 	query := "SELECT PlaylistID, SongID FROM playlists_songs"
 	rows, err := db.Query(query)
 
-	var p, s string
+	var ps PlaylistSong
 
 	rows.Next()
-	err = rows.Scan(&p, &s)
+	err = rows.Scan(&ps.PlaylistID, &ps.SongID)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(p + " : " + s)
+	fmt.Println(ps.PlaylistID + " : " + ps.SongID)
 }
 
-func getPass() *string {
-	data, err := ioutil.ReadFile("../password")
+func getPass() (file_data string) {
+	data, err := ioutil.ReadFile("../local")
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	out:= string(data)
-
-	return &out
+	file_data = string(data)
+	return
 }
