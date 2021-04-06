@@ -8,43 +8,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type PlaylistSong struct {
-	PlaylistID string "bson:\"PlaylistID\""
-	SongID     string "bson:\"SongID\""
-}
-
-func Songs_Table_Reader(c chan PlaylistSong) {
-	db, err := sql.Open("mysql", "root:"+getPass()+"@(localhost:3306)/spotify?parseTime=true")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = db.Ping()
-	if err != nil {
-		panic(err.Error())
-	}
-
-	query := "SELECT PlaylistID, SongID FROM playlists_songs"
-	rows, err := db.Query(query)
-
-	var ps PlaylistSong
-
-	more := rows.Next()
-	for {
-		// break on end of query results
-		if !more {
-			close(c)
-			break
-		}
-		err = rows.Scan(&ps.PlaylistID, &ps.SongID)
-		if err != nil {
-			log.Fatal(err)
-		}
-		more = rows.Next()
-		c <- ps
-	}
-}
-
 func getPass() (file_data string) {
 	data, err := ioutil.ReadFile("passwords/local")
 
