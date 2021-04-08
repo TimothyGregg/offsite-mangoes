@@ -10,11 +10,15 @@ import (
 	"time"
 
 	"github.com/TimothyGregg/offsite-mangoes/loc_db_talker"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
+
+type spotify_object struct {
+	OwnerID string
+	Owns    string
+}
 
 func main() {
 	// Atlas connection
@@ -23,42 +27,40 @@ func main() {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
 		"mongodb+srv://tim:"+url.QueryEscape(getPass())+"@cluster0.kkwum.mongodb.net/the_db?retryWrites=true&w=majority",
 	))
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 
 	defer func() {
-		if err = client.Disconnect(ctx); err != nil { panic(err) }
+		if err = client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
 	}()
 
-	if err := client.Ping(ctx, readpref.Primary()); err != nil { panic(err) }
+	if err := client.Ping(ctx, readpref.Primary()); err != nil {
+		panic(err)
+	}
 
 	fmt.Println("Successfully connected and pinged.")
 
 	c := make(chan []interface{})
-	// goroutine for adding things to the channel. Without this, the loop hangs forever
-	go loc_db_talker.Table_Reader(c, "tracks")
-	var outstring string
-	var field_names []string
-	var input []string
-	var filter bson.D
-	var update bson.D
-	initial := true
-	for interface_array := range c {
-		if initial {
-			field_names = make([]string, len(interface_array))
-			input = make([]string, len(interface_array))
-			initial = false
-			for i, pointer := range interface_array {
-				// Extraction of value from interface requires type assertion. 
-				field_names[i] = string(*pointer.(*sql.RawBytes))
-			}
-			filter = bson.D{field_names}
-		} else {
-			for i, pointer := range interface_array {
-				// Extraction of value from interface requires type assertion. 
-				input[i] = pointer.(*sql.RawBytes)
-			}
-			for _, p := range pointers {
-				outstring += string(*p) + " / "
+	input := new(spotify_object)
+
+	for _, table_name := range [3]string{"artists", "playlists", "playlists_songs"} {
+		// goroutine for adding things to the channel. Without this, the loop hangs forever
+		go loc_db_talker.Table_Reader(c, table_name)
+		if table_name == "playlists_songs" {
+			table_name = "playlist_songs"
+		}
+		collection := client.Database("the_db").Collection(table_name)
+		fmt.Println("Processing table: " + table_name)
+		for interface_array := range c {
+			input.OwnerID = string(*interface_array[0].(*sql.RawBytes))
+			input.Owns = string(*interface_array[1].(*sql.RawBytes))
+			fmt.Println(input)
+			_, err = collection.InsertOne(context.TODO(), input)
+			if err != nil {
+				panic(err)
 			}
 		}
 	}

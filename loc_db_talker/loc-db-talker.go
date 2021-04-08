@@ -40,6 +40,7 @@ func Table_Reader(c chan []interface{}, table_name string) {
 	// This is a wacky workaround to meet the expected input type of rows.Scan()
 	values := make([]sql.RawBytes, len(columns))
 	scanArgs := make([]interface{}, len(values))
+	// Fill scanArgs with pointers to values, so we can output the pointers to the sql.RawBytes objects
 	for i := range values {
 		scanArgs[i] = &values[i]
 	}
