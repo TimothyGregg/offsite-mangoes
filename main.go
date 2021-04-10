@@ -43,7 +43,7 @@ func main() {
 
 	fmt.Println("Successfully connected and pinged.")
 
-	c := make(chan []interface{})
+	c := make(chan []sql.RawBytes)
 	input := new(spotify_object)
 
 	for _, table_name := range [3]string{"artists", "playlists", "playlists_songs"} {
@@ -52,13 +52,12 @@ func main() {
 		if table_name == "playlists_songs" {
 			table_name = "playlist_songs"
 		}
-		// collection := client.Database("the_db").Collection(table_name)
+		collection := client.Database("the_db").Collection(table_name)
 		fmt.Println("Processing table: " + table_name)
 		for interface_array := range c {
-			fmt.Println(string(*interface_array[1].(*sql.RawBytes)))
-			input.OwnerID = string(*interface_array[0].(*sql.RawBytes))
-			input.Owns = string(*interface_array[1].(*sql.RawBytes))
-			// _, err = collection.InsertOne(context.TODO(), input)
+			input.OwnerID = string(interface_array[0])
+			input.Owns = string(interface_array[1])
+			_, err = collection.InsertOne(context.TODO(), input)
 			if err != nil {
 				panic(err)
 			}
