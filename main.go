@@ -52,13 +52,13 @@ func main() {
 		if table_name == "playlists_songs" {
 			table_name = "playlist_songs"
 		}
-		collection := client.Database("the_db").Collection(table_name)
+		// collection := client.Database("the_db").Collection(table_name)
 		fmt.Println("Processing table: " + table_name)
 		for interface_array := range c {
+			fmt.Println(string(*interface_array[1].(*sql.RawBytes)))
 			input.OwnerID = string(*interface_array[0].(*sql.RawBytes))
 			input.Owns = string(*interface_array[1].(*sql.RawBytes))
-			fmt.Println(input)
-			_, err = collection.InsertOne(context.TODO(), input)
+			// _, err = collection.InsertOne(context.TODO(), input)
 			if err != nil {
 				panic(err)
 			}
